@@ -18,9 +18,10 @@ type Stat struct {
 	RemainingJobs int `json:"remaining_jobs"`
 }
 
-func startAPIServer(qryStr chan<- string, processedReq *int) {
+func startAPIServer(qryStr chan<- string, currConnection *int, processedReq *int) {
 	http.HandleFunc("/stat", func(w http.ResponseWriter, r *http.Request) {
 		stat := &Stat{
+			CurrConnCTR:   *currConnection,
 			ProcessedReq:  *processedReq,
 			RemainingJobs: len(qryStr),
 		}

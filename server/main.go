@@ -30,6 +30,7 @@ func main() {
 		l.Close()
 	}()
 
+	var currConnection int
 	var processedReq int
 	qryStr := make(chan string, 100)
 	throttle := time.Tick(reqRate)
@@ -42,7 +43,7 @@ func main() {
 		}
 	}()
 
-	go startAPIServer(qryStr, &processedReq)
+	go startAPIServer(qryStr, &currConnection, &processedReq)
 
 	for {
 		conn, err := l.Accept()
@@ -51,15 +52,17 @@ func main() {
 			continue
 		}
 
-		go requestHandler(conn, qryStr)
+		go requestHandler(conn, qryStr, &currConnection)
 	}
 }
 
-func requestHandler(conn net.Conn, qryStr chan<- string) {
+func requestHandler(conn net.Conn, qryStr chan<- string, currConnection *int) {
 	fmt.Printf("Handling new connection: %s...\n", conn.RemoteAddr())
+	*currConnection++
 
 	defer func() {
 		fmt.Printf("Closing connetion: %s...\n", conn.RemoteAddr())
+		*currConnection--
 		conn.Close()
 	}()
 

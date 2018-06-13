@@ -69,6 +69,7 @@ func requestHandler(conn net.Conn) {
 			return
 		default:
 			conn.Write([]byte(readLine + "\n"))
+			requestExternalAPI(readLine)
 		}
 	}
 }

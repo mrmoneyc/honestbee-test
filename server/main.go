@@ -2,7 +2,7 @@ package main
 
 import (
 	"bufio"
-	"log"
+	"fmt"
 	"net"
 	"os"
 	"strings"
@@ -14,37 +14,48 @@ const (
 	connPort            = "9527"
 	connType            = "tcp"
 	connTimeoutDuration = 10
+	reqRate             = time.Second / 30
 )
 
 func main() {
 	l, err := net.Listen(connType, connHost+":"+connPort)
 	if err != nil {
-		log.Printf("%v\n", err)
+		fmt.Printf("%v\n", err)
 		os.Exit(1)
 	}
-	log.Printf("TCP Server listening on %s:%s\n", connHost, connPort)
+	fmt.Printf("TCP Server listening on %s:%s\n", connHost, connPort)
 
 	defer func() {
-		log.Println("Listener Closed")
+		fmt.Println("Listener Closed")
 		l.Close()
+	}()
+
+	qryStr := make(chan string, 100)
+	throttle := time.Tick(reqRate)
+
+	go func() {
+		for q := range qryStr {
+			<-throttle
+			go requestExternalAPI(q)
+		}
 	}()
 
 	for {
 		conn, err := l.Accept()
 		if err != nil {
-			log.Printf("%v\n", err)
+			fmt.Printf("%v\n", err)
 			continue
 		}
 
-		go requestHandler(conn)
+		go requestHandler(conn, qryStr)
 	}
 }
 
-func requestHandler(conn net.Conn) {
-	log.Printf("Handling new connection: %s...\n", conn.RemoteAddr())
+func requestHandler(conn net.Conn, qryStr chan<- string) {
+	fmt.Printf("Handling new connection: %s...\n", conn.RemoteAddr())
 
 	defer func() {
-		log.Printf("Closing connetion: %s...\n", conn.RemoteAddr())
+		fmt.Printf("Closing connetion: %s...\n", conn.RemoteAddr())
 		conn.Close()
 	}()
 
@@ -56,7 +67,7 @@ func requestHandler(conn net.Conn) {
 
 		bytes, err := bufReader.ReadBytes('\n')
 		if err != nil {
-			log.Printf("Reading buffer failed: %v\n", err)
+			fmt.Printf("Reading buffer failed: %v\n", err)
 			return
 		}
 
@@ -65,11 +76,11 @@ func requestHandler(conn net.Conn) {
 		switch readLine {
 		case "quit":
 			conn.Write([]byte("QUIT\n"))
-			log.Println("QUIT")
+			fmt.Println("QUIT")
 			return
 		default:
 			conn.Write([]byte(readLine + "\n"))
-			requestExternalAPI(readLine)
+			qryStr <- readLine
 		}
 	}
 }

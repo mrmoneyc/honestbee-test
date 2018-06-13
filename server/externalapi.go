@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"time"
 )
@@ -16,11 +15,11 @@ const (
 func requestExternalAPI(qryStr string) {
 	var searchByTitle SearchByTitle
 
-	log.Printf("[%v] Query: %s\n", time.Now(), qryStr)
+	fmt.Printf("[%v] Query: %s\n", time.Now(), qryStr)
 
 	req, err := http.NewRequest("GET", apiEndPoint, nil)
 	if err != nil {
-		log.Printf("%v\n", err)
+		fmt.Printf("%v\n", err)
 		return
 	}
 
@@ -30,23 +29,23 @@ func requestExternalAPI(qryStr string) {
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Printf("%v\n", err)
+		fmt.Printf("%v\n", err)
 		return
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		log.Printf("%s: %s\n", resp.Status, req.URL)
+		fmt.Printf("%s: %s\n", resp.Status, req.URL)
 		return
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Printf("%v\n", err)
+		fmt.Printf("%v\n", err)
 		return
 	}
 	if err := json.Unmarshal([]byte(body), &searchByTitle); err != nil {
-		log.Printf("%v\n", err)
+		fmt.Printf("%v\n", err)
 		return
 	}
 

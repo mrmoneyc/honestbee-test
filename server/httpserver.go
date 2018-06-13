@@ -18,9 +18,12 @@ type Stat struct {
 	RemainingJobs int `json:"remaining_jobs"`
 }
 
-func startAPIServer(qryStr chan<- string) {
+func startAPIServer(qryStr chan<- string, processedReq *int) {
 	http.HandleFunc("/stat", func(w http.ResponseWriter, r *http.Request) {
-		stat := &Stat{RemainingJobs: len(qryStr)}
+		stat := &Stat{
+			ProcessedReq:  *processedReq,
+			RemainingJobs: len(qryStr),
+		}
 		b, err := json.Marshal(stat)
 		if err != nil {
 			fmt.Printf("json marshal failed: %v", err)

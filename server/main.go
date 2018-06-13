@@ -30,6 +30,7 @@ func main() {
 		l.Close()
 	}()
 
+	var processedReq int
 	qryStr := make(chan string, 100)
 	throttle := time.Tick(reqRate)
 
@@ -37,10 +38,11 @@ func main() {
 		for q := range qryStr {
 			<-throttle
 			go requestExternalAPI(q)
+			processedReq++
 		}
 	}()
 
-	go startAPIServer(qryStr)
+	go startAPIServer(qryStr, &processedReq)
 
 	for {
 		conn, err := l.Accept()

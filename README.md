@@ -29,6 +29,11 @@ make build_client
 ./bin/tcpcli --help
 ```
 
+### Statistics API
+```
+curl -X GET localhost:9528/stat
+```
+
 License
 ---------------
 

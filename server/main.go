@@ -40,6 +40,8 @@ func main() {
 		}
 	}()
 
+	go startAPIServer(qryStr)
+
 	for {
 		conn, err := l.Accept()
 		if err != nil {

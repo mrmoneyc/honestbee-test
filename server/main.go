@@ -19,7 +19,9 @@ const (
 )
 
 var (
-	mu sync.RWMutex
+	mu             sync.RWMutex
+	processedReq   int
+	currConnection int
 )
 
 func main() {
@@ -35,8 +37,6 @@ func main() {
 		l.Close()
 	}()
 
-	var currConnection int
-	var processedReq int
 	qryStr := make(chan string, 100)
 	throttle := time.Tick(reqRate)
 
@@ -44,13 +44,14 @@ func main() {
 		for q := range qryStr {
 			<-throttle
 			go requestExternalAPI(q)
+
 			mu.Lock()
 			processedReq++
 			mu.Unlock()
 		}
 	}()
 
-	go startAPIServer(qryStr, &currConnection, &processedReq)
+	go startAPIServer(qryStr)
 
 	for {
 		conn, err := l.Accept()
@@ -59,21 +60,24 @@ func main() {
 			continue
 		}
 
-		go requestHandler(conn, qryStr, &currConnection)
+		go requestHandler(conn, qryStr)
 	}
 }
 
-func requestHandler(conn net.Conn, qryStr chan<- string, currConnection *int) {
+func requestHandler(conn net.Conn, qryStr chan<- string) {
 	fmt.Printf("Handling new connection: %s...\n", conn.RemoteAddr())
+
 	mu.Lock()
-	*currConnection++
+	currConnection++
 	mu.Unlock()
 
 	defer func() {
 		fmt.Printf("Closing connetion: %s...\n", conn.RemoteAddr())
+
 		mu.Lock()
-		*currConnection--
+		currConnection--
 		mu.Unlock()
+
 		conn.Close()
 	}()
 

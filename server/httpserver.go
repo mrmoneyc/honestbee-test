@@ -18,15 +18,16 @@ type Stat struct {
 	RemainingJobs int `json:"remaining_jobs"`
 }
 
-func startAPIServer(qryStr chan<- string, currConnection *int, processedReq *int) {
+func startAPIServer(qryStr chan<- string) {
 	http.HandleFunc("/stat", func(w http.ResponseWriter, r *http.Request) {
 		mu.RLock()
 		stat := &Stat{
-			CurrConnCTR:   *currConnection,
-			ProcessedReq:  *processedReq,
+			CurrConnCTR:   currConnection,
+			ProcessedReq:  processedReq,
 			RemainingJobs: len(qryStr),
 		}
 		mu.RUnlock()
+
 		b, err := json.Marshal(stat)
 		if err != nil {
 			fmt.Printf("json marshal failed: %v", err)

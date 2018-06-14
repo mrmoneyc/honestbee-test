@@ -20,11 +20,13 @@ type Stat struct {
 
 func startAPIServer(qryStr chan<- string, currConnection *int, processedReq *int) {
 	http.HandleFunc("/stat", func(w http.ResponseWriter, r *http.Request) {
+		mu.RLock()
 		stat := &Stat{
 			CurrConnCTR:   *currConnection,
 			ProcessedReq:  *processedReq,
 			RemainingJobs: len(qryStr),
 		}
+		mu.RUnlock()
 		b, err := json.Marshal(stat)
 		if err != nil {
 			fmt.Printf("json marshal failed: %v", err)

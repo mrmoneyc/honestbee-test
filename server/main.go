@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -15,6 +16,10 @@ const (
 	connType            = "tcp"
 	connTimeoutDuration = 10
 	reqRate             = time.Second / 30
+)
+
+var (
+	mu sync.RWMutex
 )
 
 func main() {
@@ -39,7 +44,9 @@ func main() {
 		for q := range qryStr {
 			<-throttle
 			go requestExternalAPI(q)
+			mu.Lock()
 			processedReq++
+			mu.Unlock()
 		}
 	}()
 
@@ -58,11 +65,15 @@ func main() {
 
 func requestHandler(conn net.Conn, qryStr chan<- string, currConnection *int) {
 	fmt.Printf("Handling new connection: %s...\n", conn.RemoteAddr())
+	mu.Lock()
 	*currConnection++
+	mu.Unlock()
 
 	defer func() {
 		fmt.Printf("Closing connetion: %s...\n", conn.RemoteAddr())
+		mu.Lock()
 		*currConnection--
+		mu.Unlock()
 		conn.Close()
 	}()
 

@@ -12,6 +12,10 @@ const (
 	apiEndPoint = "http://pcc.g0v.ronny.tw/api/searchbytitle"
 )
 
+var (
+	currReqCount int
+)
+
 func requestExternalAPI(qryStr string) {
 	var searchByTitle SearchByTitle
 
@@ -27,6 +31,10 @@ func requestExternalAPI(qryStr string) {
 	params.Add("query", qryStr)
 	req.URL.RawQuery = params.Encode()
 
+	mu.Lock()
+	currReqCount++
+	mu.Unlock()
+
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		fmt.Printf("%v\n", err)
@@ -38,6 +46,10 @@ func requestExternalAPI(qryStr string) {
 		fmt.Printf("%s: %s\n", resp.Status, req.URL)
 		return
 	}
+
+	mu.Lock()
+	currReqCount--
+	mu.Unlock()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

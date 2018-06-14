@@ -15,13 +15,14 @@ const (
 	connPort            = "9527"
 	connType            = "tcp"
 	connTimeoutDuration = 10
-	reqRate             = time.Second / 30
+	reqLimitPerSec      = 30
+	reqRate             = time.Second / reqLimitPerSec
 )
 
 var (
-	mu             sync.RWMutex
-	processedReq   int
-	currConnection int
+	mu           sync.RWMutex
+	processedReq int
+	currClient   []string
 )
 
 func main() {
@@ -68,14 +69,18 @@ func requestHandler(conn net.Conn, qryStr chan<- string) {
 	fmt.Printf("Handling new connection: %s...\n", conn.RemoteAddr())
 
 	mu.Lock()
-	currConnection++
+	currClient = append(currClient, conn.RemoteAddr().String())
 	mu.Unlock()
 
 	defer func() {
 		fmt.Printf("Closing connetion: %s...\n", conn.RemoteAddr())
 
 		mu.Lock()
-		currConnection--
+		for k, v := range currClient {
+			if v == conn.RemoteAddr().String() {
+				currClient = currClient[:k+copy(currClient[k:], currClient[k+1:])]
+			}
+		}
 		mu.Unlock()
 
 		conn.Close()

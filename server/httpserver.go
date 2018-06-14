@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"runtime"
 )
 
 const (
@@ -12,19 +13,26 @@ const (
 )
 
 type Stat struct {
-	CurrConnCTR   int `json:"current_connection_count"`
-	CurrReqRate   int `json:"current_request_rate"`
-	ProcessedReq  int `json:"processed_request_count"`
-	RemainingJobs int `json:"remaining_jobs"`
+	CurrConnCount  int      `json:"current_connection_count"`
+	CurrReqRate    float64  `json:"current_request_rate"`
+	ProcessedReq   int      `json:"processed_request_count"`
+	CurrReqCount   int      `json:"current_request_count"`
+	RemainingJobs  int      `json:"remaining_jobs"`
+	CurrGoRoutine  int      `json:"current_goroutine_count"`
+	CurrConnClient []string `json:"current_connected_client"`
 }
 
 func startAPIServer(qryStr chan<- string) {
 	http.HandleFunc("/stat", func(w http.ResponseWriter, r *http.Request) {
 		mu.RLock()
 		stat := &Stat{
-			CurrConnCTR:   currConnection,
-			ProcessedReq:  processedReq,
-			RemainingJobs: len(qryStr),
+			CurrConnCount:  len(currClient),
+			CurrReqRate:    float64(currReqCount) / float64(reqLimitPerSec),
+			ProcessedReq:   processedReq,
+			CurrReqCount:   currReqCount,
+			RemainingJobs:  len(qryStr),
+			CurrGoRoutine:  runtime.NumGoroutine(),
+			CurrConnClient: currClient,
 		}
 		mu.RUnlock()
 

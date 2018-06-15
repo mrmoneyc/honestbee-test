@@ -4,6 +4,10 @@
 
 honestbee take home test
 
+## Demo
+
+[![TCP server demo](https://img.youtube.com/vi/pwg2YZaAmwM/0.jpg)](https://www.youtube.com/watch?v=pwg2YZaAmwM)
+
 ## Build
 
 ### Server
@@ -24,9 +28,16 @@ make build_client
 ./bin/tcpsrv
 ```
 
+TCP server default timeout: 10 sec
+
 ### Client
 ```
 ./bin/tcpcli --help
+```
+
+### Statistics API
+```
+curl -X GET localhost:9528/stat
 ```
 
 License

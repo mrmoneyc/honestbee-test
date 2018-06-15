@@ -13,7 +13,8 @@ import (
 
 const (
 	connType        = "tcp"
-	produceDuration = 100 * time.Millisecond
+	produceDuration = 1000 * time.Millisecond
+	workerBootDelay = 100 * time.Millisecond
 )
 
 var (
@@ -38,7 +39,7 @@ func main() {
 	for w := 1; w <= numOfWorker; w++ {
 		wg.Add(1)
 		go requestWorker(&wg, w)
-		time.Sleep(produceDuration)
+		time.Sleep(workerBootDelay)
 	}
 
 	wg.Wait()

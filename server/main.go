@@ -23,6 +23,7 @@ var (
 	mu           sync.RWMutex
 	processedReq int
 	currClient   []string
+	qryStr       = make(chan string, 100)
 )
 
 func main() {
@@ -38,7 +39,6 @@ func main() {
 		l.Close()
 	}()
 
-	qryStr := make(chan string, 100)
 	throttle := time.Tick(reqRate)
 
 	go func() {
@@ -52,7 +52,7 @@ func main() {
 		}
 	}()
 
-	go startAPIServer(qryStr)
+	go startAPIServer()
 
 	for {
 		conn, err := l.Accept()
@@ -61,11 +61,11 @@ func main() {
 			continue
 		}
 
-		go requestHandler(conn, qryStr)
+		go requestHandler(conn)
 	}
 }
 
-func requestHandler(conn net.Conn, qryStr chan<- string) {
+func requestHandler(conn net.Conn) {
 	fmt.Printf("Handling new connection: %s...\n", conn.RemoteAddr())
 
 	mu.Lock()

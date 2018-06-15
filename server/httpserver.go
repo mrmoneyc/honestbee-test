@@ -22,31 +22,36 @@ type Stat struct {
 	CurrConnClient []string `json:"current_connected_client"`
 }
 
-func startAPIServer(qryStr chan<- string) {
-	http.HandleFunc("/stat", func(w http.ResponseWriter, r *http.Request) {
-		mu.RLock()
-		stat := &Stat{
-			CurrConnCount:  len(currClient),
-			CurrReqRate:    float64(currReqCount) / float64(reqLimitPerSec),
-			ProcessedReq:   processedReq,
-			CurrReqCount:   currReqCount,
-			RemainingJobs:  len(qryStr),
-			CurrGoRoutine:  runtime.NumGoroutine(),
-			CurrConnClient: currClient,
-		}
-		mu.RUnlock()
-
-		b, err := json.Marshal(stat)
-		if err != nil {
-			fmt.Printf("json marshal failed: %v", err)
-		}
-
-		fmt.Fprintf(w, "%s", b)
-	})
+func startAPIServer() {
+	http.HandleFunc("/stat", StatHandler)
 
 	fmt.Printf("HTTP Server listening on %s:%s\n", apiServeHost, apiServePort)
 	err := http.ListenAndServe(apiServeHost+":"+apiServePort, nil)
 	if err != nil {
 		fmt.Printf("%v\n", err)
 	}
+}
+
+func StatHandler(w http.ResponseWriter, r *http.Request) {
+	mu.RLock()
+	stat := &Stat{
+		CurrConnCount:  len(currClient),
+		CurrReqRate:    float64(currReqCount) / float64(reqLimitPerSec),
+		ProcessedReq:   processedReq,
+		CurrReqCount:   currReqCount,
+		RemainingJobs:  len(qryStr),
+		CurrGoRoutine:  runtime.NumGoroutine(),
+		CurrConnClient: currClient,
+	}
+	mu.RUnlock()
+
+	b, err := json.Marshal(stat)
+	if err != nil {
+		fmt.Printf("json marshal failed: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("json marshal failed"))
+		return
+	}
+
+	fmt.Fprintf(w, "%s", b)
 }

@@ -16,10 +16,10 @@ var (
 	currReqCount int
 )
 
-func requestExternalAPI(qryStr string) {
+func requestExternalAPI(q string) {
 	var searchByTitle SearchByTitle
 
-	fmt.Printf("[%v] Query: %s\n", time.Now(), qryStr)
+	fmt.Printf("[%v] Query: %s\n", time.Now(), q)
 
 	req, err := http.NewRequest("GET", apiEndPoint, nil)
 	if err != nil {
@@ -28,7 +28,7 @@ func requestExternalAPI(qryStr string) {
 	}
 
 	params := req.URL.Query()
-	params.Add("query", qryStr)
+	params.Add("query", q)
 	req.URL.RawQuery = params.Encode()
 
 	mu.Lock()

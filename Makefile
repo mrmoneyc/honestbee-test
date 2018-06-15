@@ -12,7 +12,13 @@ BUILD_OUT=bin
 BUILD_SRV_BIN_NAME=tcpsrv
 BUILD_CLI_BIN_NAME=tcpcli
 
-all: clean fmt build build_darwin build_linux
+all: clean fmt test build
+
+test: test_server
+
+test_server:
+	@echo "--> Testing (Server)..."
+	cd $(SRV_SRC); $(GOTEST) -v
 
 build: build_server build_client
 
@@ -35,4 +41,4 @@ fmt:
 	$(GOCMD) fmt ./...
 	$(GOCMD) vet ./...
 
-.PHONY: all build build_server build_client clean fmt
+.PHONY: all test test_server build build_server build_client clean fmt

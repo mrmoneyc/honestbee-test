@@ -20,6 +20,10 @@ make build_server
 make build_client
 ```
 
+## Test
+```
+make test
+```
 
 ## Usage
 
